@@ -1,0 +1,62 @@
+{% extends "base.html" %}
+
+{% block title %}Central Fiscal | RBL Log{% endblock %}
+
+{% block content %}
+<div class="mb-4">
+    <h2 class="fw-bold text-dark">Central de Downloads Fiscal</h2>
+    <p class="text-muted">Recupere documentos diretamente da Sefaz via API.</p>
+</div>
+
+<div class="card border-0 shadow-sm p-4">
+    <div class="row align-items-center">
+        <div class="col-lg-7">
+            <h5 class="fw-bold mb-3"><i class="fas fa-barcode me-2"></i>Chave de Acesso</h5>
+            <div class="input-group mb-3">
+                <input type="text" id="chave" class="form-control form-control-lg" maxlength="44" placeholder="Insira os 44 dígitos da NF-e ou CT-e">
+                <button class="btn btn-primary px-4" onclick="buscarDoc()" id="btnBusca">
+                    <span id="spinner" class="spinner-border spinner-border-sm d-none"></span> Buscar
+                </button>
+            </div>
+            <div id="statusBadge"></div>
+        </div>
+        <div class="col-lg-5 text-center border-start d-none" id="areaDownload">
+            <p class="mb-2 fw-bold text-success"><i class="fas fa-check-circle"></i> Documento Pronto!</p>
+            <div class="d-grid gap-2 col-8 mx-auto">
+                <button class="btn btn-outline-danger" onclick="baixar('pdf')"><i class="fas fa-file-pdf"></i> Download PDF</button>
+                <button class="btn btn-outline-dark" onclick="baixar('xml')"><i class="fas fa-file-code"></i> Download XML</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function buscarDoc() {
+    const chave = document.getElementById('chave').value;
+    if(chave.length !== 44) return alert("Chave inválida!");
+
+    document.getElementById('spinner').classList.remove('d-none');
+    
+    fetch('/fiscal/api/buscar_documento', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({chave: chave})
+    })
+    .then(res => res.json())
+    .then(data => {
+        document.getElementById('spinner').classList.add('d-none');
+        if(data.sucesso) {
+            document.getElementById('areaDownload').classList.remove('d-none');
+            document.getElementById('statusBadge').innerHTML = `<span class="badge bg-info text-dark">Tipo detectado: ${data.tipo}</span>`;
+        } else {
+            alert(data.mensagem);
+        }
+    });
+}
+
+function baixar(tipo) {
+    const chave = document.getElementById('chave').value;
+    window.location.href = `/fiscal/download/${tipo}/${chave}`;
+}
+</script>
+{% endblock %}
